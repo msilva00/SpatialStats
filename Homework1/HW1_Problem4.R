@@ -5,17 +5,38 @@ xgrid = seq(-3, 3, length = 100)
 
 
 
-# Spherical
+# Spherical Covariance Matrix
 y = grf(grid = cbind(xgrid, 0), cov.model = "spherical", cov.pars = c(1, phi[1]), kappa = 0.5)
 plot(xgrid, y$data, type='l', bty = 'n', main = "Spherical Covariance")
 
 
-# Powered Exponential
-y = grf(grid = cbind(xgrid, 0), cov.model = "spherical", cov.pars = c(1, phi[2]), kappa = 2)
-plot(xgrid, y$data, type='l', bty = 'n', main = "Powered Exponential \n Covariance", col = "red")
-y = grf(grid = cbind(xgrid, 0), cov.model = "spherical", cov.pars = c(1, phi[2]), kappa = 0.5)
-lines(xgrid, y$data, type='l', bty = 'n', main = "Powered Exponential \n Covariance", col = "blue")
+# Powered Exponential Covariance Matrix
+y = grf(grid = cbind(xgrid, 0), cov.model = "powered.exponential", cov.pars = c(1, phi[2]), kappa = 2)
+plot(xgrid, y$data, type='l', bty = 'n', main = "Powered Exponential \n Covariance", col = "blue",
+     ylim = c(-3,3))
+y = grf(grid = cbind(xgrid, 0), cov.model = "powered.exponential", cov.pars = c(1, phi[2]), kappa = 0.5)
+lines(xgrid, y$data, type='l', bty = 'n', main = "Powered Exponential \n Covariance", col = "red")
 legend("bottomleft", legend=c(expression(paste(nu, " = 2")), 
                                expression(paste(nu, " = 0.5"))), 
        col = c("red", "blue"), lty = 1)
+
+# Rational Quadratic Covariance Matrix
+y = grf(grid = cbind(xgrid, 0), cov.model = "cauchy", cov.pars = c(1, phi[3]), kappa = 1)
+plot(xgrid, y$data, type='l', bty = 'n', main = "Rational Quadratic \n Covariance", col = "red")
+
+# Wave Covariance Matrix
+y = grf(grid = cbind(xgrid, 0), cov.model = "wave", cov.pars = c(1, phi[4]), kappa = 0.5)
+plot(xgrid, y$data, type='l', bty = 'n', main = "Rational Quadratic \n Covariance", col = "red")
+
+
+# Matern Covariance Matrix
+y = grf(grid = cbind(xgrid, 0), cov.model = "matern", cov.pars = c(1, phi[5]), kappa = 2)
+plot(xgrid, y$data, type='l', bty = 'n', main = "Matern Covariance", col = "blue",
+     ylim = c(-3,3))
+y = grf(grid = cbind(xgrid, 0), cov.model = "powered.exponential", cov.pars = c(1, phi[2]), kappa = 0.5)
+lines(xgrid, y$data, type='l', bty = 'n', main = "Powered Exponential \n Covariance", col = "red")
+legend("bottomleft", legend=c(expression(paste(nu, " = 2")), 
+                              expression(paste(nu, " = 0.5"))), 
+       col = c("red", "blue"), lty = 1)
+
 

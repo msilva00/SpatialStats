@@ -88,16 +88,16 @@ legend("bottomright", legend = expression(paste(phi, " = 0.334")), lty = 1, col 
 
 
 # Matern
-curve(v.f(x, cov.pars = c(1, 0.3), kappa = 2, cov.model = "matern"),
+curve(sv.f(x, cov.pars = c(1, 0.3), kappa = 2, cov.model = "matern"),
       0, 2, lwd = 1, col = "black", xlab = expression(paste("Distance", (tau))),
       ylab = "Covariogram", main = "Matèrn")
-curve(v.f(x, cov.pars = c(1, 0.3), kappa = 0.5, cov.model = "matern"),
+curve(sv.f(x, cov.pars = c(1, 0.3), kappa = 0.5, cov.model = "matern"),
       0, 2,  add = TRUE,lwd = 1, col = "green")
-curve(v.f(x, cov.pars = c(1, 0.3), kappa = 1.5, cov.model = "matern"),
+curve(sv.f(x, cov.pars = c(1, 0.3), kappa = 1.5, cov.model = "matern"),
       0, 2, add = TRUE, lwd = 1, col = "blue")
-curve(v.f(x, cov.pars = c(1, 0.3), kappa = 1, cov.model = "matern"),
+curve(sv.f(x, cov.pars = c(1, 0.3), kappa = 1, cov.model = "matern"),
       0, 2, add = TRUE, lwd = 1, col = "red")
-legend("topright", legend=c(expression(paste(nu, " = 2")), expression(paste(nu, " = 1")), 
+legend("bottomright", legend=c(expression(paste(nu, " = 2")), expression(paste(nu, " = 1")), 
                             expression(paste(nu, " = 1.5")), expression(paste(nu, " = 0.5"))),
        col = c("black", "red", "blue", "green"), lty=1)
 

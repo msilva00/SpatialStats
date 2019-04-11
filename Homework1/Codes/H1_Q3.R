@@ -1,31 +1,33 @@
 # Covariance Functions
-spherical = function(d, phi, sig2=1, nu=0) {
-  ifelse (d > phi, 
+spherical = function(tau, phi, sig2=1, nu=0) {
+  ifelse (tau > phi, 
           0,
-          sig2 * (1 - 1.5 * d / phi + .5 * (d / phi) ^ 3))
+          sig2 * (1 - 1.5 * tau / phi + .5 * (tau / phi) ^ 3))
 }
 
-pow_exp = function(d, phi, sig2, nu=1) {
+
+
+pow_exp = function(tau, phi, sig2, nu=1) {
   stopifnot(nu > 0 && nu <= 2)
-  sig2 * exp(-abs(d / phi) ^ nu)
+  sig2 * exp(-abs(tau / phi) ^ nu)
 }
 
-rational_quad = function(d, phi, sig2, nu=0) {
-  sig2 * (1 - d^2 / (d^2 + phi^2) )
+rational_quad = function(tau, phi, sig2, nu=0) {
+  sig2 * (1 - tau^2 / (tau^2 + phi^2) )
 }
 
-wave = function(d, phi, sig2, nu=0) {
-  x <- d / phi
-  sig2 * ifelse(d==0, 1, (sin(x) / x))
+wave = function(tau, phi, sig2, nu=0) {
+  x <- tau / phi
+  sig2 * ifelse(tau==0, 1, (sin(x) / x))
 }
 
-matern = function(d, phi, sig2, nu=0) {
-  x <- sqrt(2 * nu) * d / phi
+matern = function(tau, phi, sig2, nu=0) {
+  x <- sqrt(2 * nu) * tau / phi
   sig2  / (2^(nu-1) * gamma(nu)) * x^nu * besselK(x, nu)
 }
 
-get_phi <- function(model, r=.05, d=1, nu=1, mn=1E-10, mx=10) {
-  f <- function(phi) model(d, phi, sig2=1, nu) - r
+get_phi <- function(cov_matrix, r=.05, tau=1, nu=1, mn=1E-10, mx=10) {
+  f <- function(phi) cov_matrix(tau, phi, sig2=1, nu) - r
   uniroot(f, c(mn,mx))
 }
 
@@ -106,19 +108,19 @@ legend("topright", legend=c(expression(paste(nu, " = 0.5")), expression(paste(nu
 
 
 #### Semi Variogram ####
-semi_variogram = function(cov_fn, d, phi, sig2, nu, d_zero) {
-  return(cov_fn(d_zero, phi, sig2, nu) - cov_fn(d, phi, sig2, nu))
+semi_variogram = function(cov_matrix, tau, phi, sig2, nu, d_zero) {
+  return(cov_matrix(d_zero, phi, sig2, nu) - cov_matrix(tau, phi, sig2, nu))
 }
 
 # Spherical
-plot(xgrid, semi_variogram(cov_fn = spherical,phi= phi[1], sig2 = 1, nu = 1, d_zero = 1E-10,d=xgrid),
+plot(xgrid, semi_variogram(cov_matrix = spherical,phi= phi[1], sig2 = 1, nu = 1, d_zero = 1E-10,tau=xgrid),
      type = 'l',
      ylab = "Semi-Variogram",xlab = expression(paste("Distance ", (tau))),
      main = "Spherical", col = "red")
 legend("bottomright", legend=expression(paste(phi, " = 1.232")), lty=1, col="red")
 
 # Rational Quadratic
-plot(xgrid, semi_variogram(cov_fn = rational_quad,phi= phi[2], sig2 = 1, nu = 1, d_zero = 1E-10,d=xgrid), 
+plot(xgrid, semi_variogram(cov_matrix = rational_quad,phi= phi[2], sig2 = 1, nu = 1, d_zero = 1E-10,tau=xgrid), 
      type = 'l',
      ylab = "Semi-variogram",xlab = expression(paste("Distance ", (tau))),
      main = "Rational Quadratic", col = "red")
@@ -126,37 +128,37 @@ legend("bottomright", legend=expression(paste(phi, " = 0.229")), lty=1, col="red
 
 # Wave
 xgrid_wave = seq(0,5, length.out = 100)
-plot(xgrid_wave, semi_variogram(cov_fn = wave,phi= phi[3], sig2 = 1, nu = 1, d_zero = 1E-10,d=xgrid_wave),
+plot(xgrid_wave, semi_variogram(cov_matrix = wave,phi= phi[3], sig2 = 1, nu = 1, d_zero = 1E-10,tau=xgrid_wave),
      type = 'l',
      ylab = "Semi-variogram",xlab = expression(paste("Distance ", (tau))),
      main = "Wave", col = "red", ylim = c(0,1.5))
 legend("topright", legend=expression(paste(phi, " = 0.334")), lty=1, col="red")
 
 # Powered Exponential
-plot(xgrid_powexp, semi_variogram(cov_fn = pow_exp,phi= powered.exp.phi[1], sig2 = 1, nu = nus[1], d_zero = 1E-10,d=xgrid_powexp), 
+plot(xgrid_powexp, semi_variogram(cov_matrix = pow_exp,phi= powered.exp.phi[1], sig2 = 1, nu = nus[1], d_zero = 1E-10,tau=xgrid_powexp), 
      type = 'l',
      ylab = "Covariogram",xlab = expression(paste("Distance ", (tau))),
      main = "Powered Exponential", col = "blue")
-lines(xgrid_powexp, semi_variogram(cov_fn = pow_exp,phi= powered.exp.phi[2], sig2 = 1, nu = nus[2], d_zero = 1E-10,d=xgrid_powexp),
+lines(xgrid_powexp, semi_variogram(cov_matrix = pow_exp,phi= powered.exp.phi[2], sig2 = 1, nu = nus[2], d_zero = 1E-10,tau=xgrid_powexp),
       type = 'l', col = "red")
-lines(xgrid_powexp, semi_variogram(cov_fn = pow_exp,phi= powered.exp.phi[3], sig2 = 1, nu = nus[3], d_zero = 1E-10,d=xgrid_powexp),
+lines(xgrid_powexp, semi_variogram(cov_matrix = pow_exp,phi= powered.exp.phi[3], sig2 = 1, nu = nus[3], d_zero = 1E-10,tau=xgrid_powexp),
       type = 'l', col = "green")
-lines(xgrid_powexp, semi_variogram(cov_fn = pow_exp,phi= powered.exp.phi[4], sig2 = 1, nu = nus[4], d_zero = 1E-10,d=xgrid_powexp),
+lines(xgrid_powexp, semi_variogram(cov_matrix = pow_exp,phi= powered.exp.phi[4], sig2 = 1, nu = nus[4], d_zero = 1E-10,tau=xgrid_powexp),
       type = 'l', col = "yellow")
 legend("bottomright", legend=c(expression(paste(nu, " = 0.5")), expression(paste(nu, " = 1.0")), 
                             expression(paste(nu, " = 1.5")), expression(paste(nu, " = 2.0"))),
        col = c("blue", "red", "green", "yellow"), lty=1)
 
 # Matern
-plot(xgrid_matern, semi_variogram(cov_fn = matern,phi= matern.phi[1], sig2 = 1, nu = nus[1], d_zero = 1E-10,d=xgrid_matern), 
+plot(xgrid_matern, semi_variogram(cov_matrix = matern,phi= matern.phi[1], sig2 = 1, nu = nus[1], d_zero = 1E-10,tau=xgrid_matern), 
      type = 'l',
      ylab = "Semi-variogram",xlab = expression(paste("Distance ", (tau))),
      main = "Matern", col = "blue")
-lines(xgrid_matern, semi_variogram(cov_fn = matern,phi= matern.phi[2], sig2 = 1, nu = nus[2], d_zero = 1E-10,d=xgrid_matern),
+lines(xgrid_matern, semi_variogram(cov_matrix = matern,phi= matern.phi[2], sig2 = 1, nu = nus[2], d_zero = 1E-10,tau=xgrid_matern),
       type = 'l', col = "red")
-lines(xgrid_matern, semi_variogram(cov_fn = matern,phi= matern.phi[3], sig2 = 1, nu = nus[3], d_zero = 1E-10,d=xgrid_matern),
+lines(xgrid_matern, semi_variogram(cov_matrix = matern,phi= matern.phi[3], sig2 = 1, nu = nus[3], d_zero = 1E-10,tau=xgrid_matern),
       type = 'l', col = "green")
-lines(xgrid_matern, semi_variogram(cov_fn = matern,phi= matern.phi[4], sig2 = 1, nu = nus[4], d_zero = 1E-10,d=xgrid_matern),
+lines(xgrid_matern, semi_variogram(cov_matrix = matern,phi= matern.phi[4], sig2 = 1, nu = nus[4], d_zero = 1E-10,tau=xgrid_matern),
       type = 'l', col = "yellow")
 legend("bottomright", legend=c(expression(paste(nu, " = 0.5")), expression(paste(nu, " = 1.0")), 
                                expression(paste(nu, " = 1.5")), expression(paste(nu, " = 2.0"))),

@@ -22,8 +22,7 @@ wave = function(tau, phi, sig2, nu=0) {
 }
 
 matern = function(tau, phi, sig2, nu=0) {
-  x <- sqrt(2 * nu) * tau / phi
-  sig2  / (2^(nu-1) * gamma(nu)) * x^nu * besselK(x, nu)
+  sig2  / (2^(nu-1) * gamma(nu)) * (tau / phi)^nu * besselK((tau/phi), nu)
 }
 
 get_phi <- function(cov_matrix, r=.05, tau=1, nu=1, mn=1E-10, mx=10) {

@@ -1,3 +1,5 @@
+## I USE THE PACKAGE IN THIS CODE ##
+
 library(geoR)
 # Variogram models with the same "practical" range:
 #
@@ -101,4 +103,4 @@ legend("bottomright", legend=c(expression(paste(nu, " = 2")), expression(paste(n
                             expression(paste(nu, " = 1.5")), expression(paste(nu, " = 0.5"))),
        col = c("black", "red", "blue", "green"), lty=1)
 
-
+?cov.spatial

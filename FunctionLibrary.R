@@ -1,5 +1,11 @@
 library(rootSolve)
 
+# To get specific lines of code from a github url
+source_lines <- function(file, lines){
+  source(textConnection(readLines(file)[lines]))
+}
+
+
 combine <- function(x,y) {
   stopifnot(length(x) == length(y))
   n <- length(x)

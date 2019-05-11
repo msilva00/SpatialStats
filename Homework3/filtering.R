@@ -1,5 +1,5 @@
 # FULL CODE
-setwd("~/homework3-spacialstats/")
+setwd("~/SpatialStats/Homework3/")
 rm(list = ls())
 libs = c('geoR','sf','fields', 'ncdf4','tidyverse')
 sapply(libs, require, character.only = TRUE)
@@ -164,11 +164,11 @@ summary(mod)
 
 
 
-mod2 = lm(y~ lon + lat + lon:lat)
-summary(mod2)
+mod = lm(y~ lon + lat + lon*lat)
+summary(mod)
 
 # Residuals
-yhat = predict(mod2)
+yhat = predict(mod)
 res = y - yhat
 
 
@@ -201,13 +201,13 @@ tmp.ylim = c(0, max(sapply(tmp[-5], function(x) max(x$v, na.rm = TRUE))))
 plot(0, type='n', bty='n', xlim = tmp.xlim, ylim = tmp.ylim,
      main = "Directional Semivariogram \n for log(albedo)", cex.main = 1.5,
      xlab = "Distance", ylab = "Semivariance")
-for (i in 1:4)
+for (i in 1:4){
   lines(tmp[[2]]$u, tmp[[i]]$v, col = i, lty = i)
+}
 legend("topleft", legend = expression(0^o, 45^o, 90^o, 135^o),
        lty = 1:4, col = 1:4)
 par(mfrow = c(1, 1))
 dev.off()
-trend = y~lon + lat + I(lon^2):I(lat^2)
 
 #### LSE fit to Matern correlation ####
 # C(u) = sig^2 * rho(u) + kappa * (u == 0)              covariance
@@ -226,23 +226,22 @@ make.f = function(nu){
 }
 objects = c("empirical_1","empirical_2","empirical_3","empirical_4")
 par(mfrow = c(1, 1))
-for (nu in c(0.5,1,1.5,2)){
-  pars = optim(rep(1.1, 3), make.f(nu), lower = c(0, 0, 0), method = "L-BFGS-B")$par
-  jpeg(paste(objects[nu], ".jpg", sep=""))
-  plot(obs$u, obs$v, ylim = c(0, max(obs$v)), type = "b")
-  lines(obs$u, semiv(obs$u, pars[1], nu, pars[2], pars[3]), col = 'red')
-  text(rep(1.25, 4), seq(1, 0.6, length = 4), c(round(pars, 3), nu),
-       pos = 4, cex = 1.5)
-  text(rep(0.5, 4), seq(1, 0.6, length = 4), expression(sigma^2, phi, kappa, nu),
-       pos = 4, cex = 1.5)
-}
+# for (nu in c(0.5,1,1.5,2)){
+#   pars = optim(rep(1.1, 3), make.f(nu), lower = c(0, 0, 0), method = "L-BFGS-B")$par
+#   jpeg(paste(objects[nu], ".jpg", sep=""))
+#   plot(obs$u, obs$v, ylim = c(0, max(obs$v)), type = "b")
+#   lines(obs$u, semiv(obs$u, pars[1], nu, pars[2], pars[3]), col = 'red')
+#   text(rep(1.25, 4), seq(1, 0.6, length = 4), c(round(pars, 3), nu),
+#        pos = 4, cex = 1.5)
+#   text(rep(0.5, 4), seq(1, 0.6, length = 4), expression(sigma^2, phi, kappa, nu),
+#        pos = 4, cex = 1.5)
+# }
 
 summary(mod)
 
 trend = y ~ 1 + lon + lat + lon * lat
 obs = variog(coords = cbind(lon,lat), data = y, trend = trend)
 
-nu = 0.5
 (pars = optim(c(0.1, 5, 1), make.f(nu), lower = c(0, 0, 0), method = "L-BFGS-B")$par)
 plot(obs$u, obs$v, ylim = c(0, max(obs$v)), type = "b", xlab = "", ylab = "", 
      main = paste("Empirical Variogram, nu = ", nu))

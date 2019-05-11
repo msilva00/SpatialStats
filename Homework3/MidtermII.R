@@ -1,47 +1,29 @@
 library(maps)
 library(geoR)
 library(MASS)
+setwd("~/SpatialStats/Homework3/")
+
 autotune = function(accept, target = 0.25, k = 2.5){
   (1+(cosh(accept-target)-1)*(k-1)/(cosh(target-
                                            ceiling(accept-target))-1))^sign(accept-target)
 }
-dat = read.table("./northeast_data.txt", header = TRUE)
-dat = dat[-31,]
+dat = read.table("alb_weightALL.csv", header = TRUE, sep = ",")
+dat = dat[,-c(3,4,5)]
+dat = sample_n(dat, 500)
 head(dat)
 
-y = log(dat$Ozone)
-n = length(y)
-lon = dat$Longitude
-lat = dat$Latitude
-ele = log(dat$Altitude+1)  # Meters above sea level
-loc = cbind(lon, lat, ele)
 
-### Plot data points on map
-col.vals = (y - min(y)) / diff(range(y))
-cols = rgb(col.vals, 0, 1-col.vals)
-# pdf("./figs/data.pdf", width = 9, height = 9)
-map("state", xlim = range(loc[,1])+c(-1,2), ylim = range(loc[,2])+c(-1, 1),
-    lwd = 2)
-points(loc, col = cols, pch = 16, cex = 1.5)
-points(x = rep(max(loc[,1]) + 0.67, 100),
-       y = seq(min(loc[,2]), max(loc[,2]), length = 100),
-       pch = 15, col = rgb(seq(0, 1, length = 100), 0, seq(1, 0, length = 100)),
-       cex = 2.5)
-lines(rep(max(loc[,1]) + 0.97, 2), range(loc[,2]))
-for (i in 1:6){
-  lines(max(loc[,1]) + c(0.97, 1.07), rep(min(loc[,2])+(i-1)*diff(range(loc[,2])/5), 2))
-  #   text(max(loc[,1])+1.15, min(loc[,2])+(i-1)*diff(range(loc[,2])/5),
-  #       round(quantile(y, (i-1)/5), 3), pos=4)
-  text(max(loc[,1])+1.12, min(loc[,2])+(i-1)*diff(range(loc[,2])/5),
-       round(seq(min(y), max(y), length = 6)[i], 3), pos=4)
-}
-title(main = "Northeast Stations and log Ozone Measurements", cex.main = 1.5)
-# dev.off()
+
+y = log(dat$alb_weight)
+n = length(y)
+lon = dat$longitude
+lat = dat$latitude
+loc = cbind(lon, lat)
+
 
 ### Explore trend and anisotropies
 plot(lon, y, bty = 'n', pch = 16, col = cols)
 plot(lat, y, bty = 'n', pch = 16, col = cols)
-plot(ele, y, bty = 'n', pch = 16, col = cols)
 
 # mod = step(lm(y ~ . + .^2 + I(loc^2), data = data.frame(loc)), scope = list("lower" = lm(y ~ 1),
 #     "upper" = lm(y ~ . + .^2 + I(loc^2), data = data.frame(loc))),
@@ -215,7 +197,7 @@ K = make.K(param.psi[1], param.gamma2[1], param.nu[1])
 K.inv = solve(K[train, train])
 beta.hat = solve(t(D) %*% K.inv %*% D) %*% t(D) %*% K.inv %*% X
 S2 = t(X - D %*% beta.hat) %*% K.inv %*% (X - D %*% beta.hat)
-Det1 = -0.5*determinant(K)$modulus[1] 
+Det1 = -0.5*determinant(K)$modulus[1]
 Det2 = -0.5*determinant(t(D) %*% K.inv %*% D)$modulus[1]
 post.curr = Det1 + Det2 + (-(n-k)/2-prior.a) * log(S2 + 2*prior.b) +
   dgamma(param.psi[1], prior.c, prior.d, log = TRUE) +
@@ -234,63 +216,63 @@ for (i in 2:(nburn + nmcmc)){
   param.gamma2[i] = param.gamma2[i-1]
   param.nu[i] = param.nu[i-1]
   vec.like[i] = vec.like[i-1]
-  
+
   cand = c(mvrnorm(1, c(param.psi[i-1], param.gamma2[i-1]), cand.sig),
            sample(nu.states, 1))
   if (all(cand > 0)){
     cand.K = make.K(cand[1], cand[2], cand[3])
     cand.K.inv = chol2inv(chol(cand.K[train, train]))
     cand.DKD.inv = solve(t(D) %*% cand.K.inv %*% D)
-    
+
     cand.beta.hat = cand.DKD.inv %*% (t(D) %*% (cand.K.inv %*% X))
     cand.S2 = t(X - D %*% cand.beta.hat) %*% cand.K.inv %*% (X - D %*% cand.beta.hat)
     cand.Det1 = -0.5*determinant(cand.K)$modulus[1]
     cand.Det2 = 0.5*determinant(cand.DKD.inv)$modulus[1]
-    
-    post.cand = cand.Det1 + cand.Det2 + (-(n-k)/2-prior.a) * log(cand.S2 + 2*prior.b) + 
+
+    post.cand = cand.Det1 + cand.Det2 + (-(n-k)/2-prior.a) * log(cand.S2 + 2*prior.b) +
       dgamma(cand[1], prior.c, prior.d, log = TRUE) +
       dgamma(cand[2], prior.e, prior.f, log = TRUE)
-    
+
     if (log(runif(1)) <= post.cand - post.curr){
       param.psi[i] = cand[1]
       param.gamma2[i] = cand[2]
       param.nu[i] = cand[3]
       accept[i] = 1
-      
+
       K = cand.K
       K.inv = cand.K.inv
       DKD.inv = cand.DKD.inv
-      
+
       beta.hat = cand.beta.hat
       S2 = cand.S2
       Det1 = cand.Det1
       Det2 = cand.Det2
-      
+
       post.curr = post.cand
-      
+
       param.tau2[i] = 1/rgamma(1, prior.a + (n-k)/2, prior.b + S2/2)
       param.beta[i,] = mvrnorm(1, beta.hat, param.tau2[i] * DKD.inv)
-      
+
       vec.like[i] = Det1 - n/2*log(param.tau2[i]) -
         1/(2*param.tau2[i])*t(X - D %*% param.beta[i,]) %*% K.inv %*% (X - D %*% param.beta[i,])
     }
   }
-  
+
   if (i > nburn){
     j = i - nburn
     list.K[[j]] = K
     ### Predictions
-    mu = D.test %*% param.beta[i,] + list.K[[j]][test, train] %*% 
+    mu = D.test %*% param.beta[i,] + list.K[[j]][test, train] %*%
       (K.inv %*% (X - D %*% param.beta[i,]))
-    V = list.K[[j]][test, test] - list.K[[j]][test, train] %*% 
+    V = list.K[[j]][test, test] - list.K[[j]][test, train] %*%
       K.inv %*% list.K[[j]][train, test]
     pred.x[j,] = mvrnorm(1, mu, V)
   }
-  
+
   # if ((floor(i/window) == i/window) && (i <= nburn))
   #   cand.sig = autotune(mean(accept[(i-window+1):i]), target = 0.234, k = window / 50) *
   #   (cand.sig + window * var(cbind(param.psi, param.gamma2)[(i-window+1):i,]) / i)
-  # 
+  #
 }
 
 param.beta = tail(param.beta, nmcmc)

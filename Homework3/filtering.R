@@ -87,8 +87,9 @@ ex = read.csv("alb_weightALL.csv", sep = ",")
 
 head(ex)
 library(dplyr)
-random500 = sample_n(ex, 500)
-y = random500[,6]
+random5001 = sample_n(ex, 500)
+random500 = random500[,c(1,2,6)]
+y = bcPower(random500[,3],0)
 require(graphics)
 col.vals = (y - min(y)) / (diff(range(y)))
 max(col.vals)
@@ -136,7 +137,7 @@ lines(density(log(random500[,3])))
 qqnorm(log(random500[,3]), main = "")
 qqline(log(random500[,3]))
 
-title("Log Transformed Albedo Measurements", outer = T, line = -2)
+title("Box and Cox Transformed Albedo Measurements", outer = T, line = -2)
 
 
 par(mfrow = c(1,2), mar = c(3,3,5,3))
@@ -149,7 +150,7 @@ qqline((random500[,3]))
 title("Albedo Measurements (w/out transformation)", outer = T, line = -2)
 
 #### Residual Analysis/Covariate Analysis ####
-
+head(random500)
 ##### LM #####
 y = log(random500$alb_weight)
 lon = random500$longitude

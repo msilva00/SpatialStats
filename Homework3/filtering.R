@@ -1,28 +1,28 @@
-# FULL CODE
-setwd("~/SpatialStats/Homework3/")
+# # FULL CODE
+setwd("~/homework3-spacialstats/")
 rm(list = ls())
 libs = c('geoR','sf','fields', 'ncdf4','tidyverse')
 sapply(libs, require, character.only = TRUE)
 
 
-#### Filter the data ####
-# # dissolve world_countries_boundaries to yield landmass
-# land = read_sf(
-#     dsn = "UIA_World_Countries_Boundaries", 
-#     layer = "UIA_World_Countries_Boundaries"
-#     ) %>% 
-#   mutate(bleh = 'bleh') %>% 
-#   group_by(bleh) %>% 
-#   summarise()
+# ### Filter the data ####
+# dissolve world_countries_boundaries to yield landmass
+land = read_sf(
+    dsn = "UIA_World_Countries_Boundaries",
+    layer = "UIA_World_Countries_Boundaries"
+    ) %>%
+  mutate(bleh = 'bleh') %>%
+  group_by(bleh) %>%
+  summarise()
 # 
 # proj_intersect = function(df){
 #   ## projects points dataframe subset as a feature class
 #   ## then calculates the intersection with land_in_box
 #   ## returns set of points that intersected
-#   points = df %>% 
+#   points = df %>%
 #     na.omit %>%
 #     st_as_sf(
-#       coords = c('lon','lat'), 
+#       coords = c('lon','lat'),
 #       crs = "+proj=longlat +datum=WGS84 +no_defs"
 #     )
 #   ol = st_intersection(points, land_in_box)[c('geometry','bhriso')]
@@ -30,25 +30,25 @@ sapply(libs, require, character.only = TRUE)
 # }
 # 
 # get_goes_data = function(path, minlat, maxlat, minlon, maxlon){
-#   # subsets satellite data to geography in question; 
+#   # subsets satellite data to geography in question;
 #   #  looking specifically at observations on land.
-#   
+# 
 #   # subset land data to area in question
 #   # build bounding box to subset the landmass data
 #   box_raw = list(
-#     rbind(c(minlon, minlat), c(minlon, maxlat), 
-#           c(maxlon, maxlat), c(maxlon, minlat), 
+#     rbind(c(minlon, minlat), c(minlon, maxlat),
+#           c(maxlon, maxlat), c(maxlon, minlat),
 #           c(minlon, minlat)
 #       )
 #     )
 #   box_poly = st_polygon(box_raw, dim = 'XY')
 #   box = st_sfc(
-#     list(box_poly), 
+#     list(box_poly),
 #     crs = "+proj=longlat +datum=WGS84 +no_defs"
 #     ) %>% st_sf
 #   # intersect landmass data with bounding box
 #   land_in_box = st_intersection(land, box)
-#   
+# 
 #   # open satellite data, pull and filter data to yield points inside bounding box
 #   goes = nc_open(path)
 #   data = tibble(
@@ -57,14 +57,14 @@ sapply(libs, require, character.only = TRUE)
 #     bhriso = as.vector(ncvar_get(goes, 'BHRiso'))
 #   ) %>% filter(
 #       !is.na(bhriso) &
-#       between(lon, minlon, maxlon) & 
+#       between(lon, minlon, maxlon) &
 #       between(lat, minlat, maxlat)
-#   ) 
-#   
+#   )
+# 
 #   # create points from coordinates; intersect with land in box
-#   points = data %>% 
+#   points = data %>%
 #     st_as_sf(
-#       coords = c('lon','lat'), 
+#       coords = c('lon','lat'),
 #       crs = "+proj=longlat +datum=WGS84 +no_defs"
 #     )
 #   ol = st_intersection(points, land_in_box)[c('geometry','bhriso')]
@@ -79,8 +79,8 @@ sapply(libs, require, character.only = TRUE)
 # ex = get_goes_data(path, minlat, maxlat, minlon, maxlon)
 # ex %>% as_tibble %>% write_csv('subsetted_data.csv')
 # dat = as.data.frame(ex)
-
-## END OF FILTERING - UNVCOMMENT ABOVE TO FILTER##
+# 
+# ## END OF FILTERING - UNVCOMMENT ABOVE TO FILTER##
 
 # READ IN DATA ##
 ex = read.csv("alb_weightALL.csv", sep = ",")
@@ -293,7 +293,7 @@ text(rep(0.5, 4), seq(0.6, 0.4, length = 4), expression(sigma^2 ~ "= ", phi ~"= 
 #### best params ####
 init <- expand.grid(seq(0,100, len=10), seq(0,1,len=10))
 
-vario = variog(data = resid, coords = loc, messages = F)
+vario = variog(data = res, coords = loc, messages = F)
 (vf1 <- variofit(vario, ini.cov.pars=init, kappa=0.5, fix.nug=F, messages = F))
 (vf2 <- variofit(vario, ini.cov.pars=init, kappa=1.0, fix.nug=F,messages = F))
 (vf3 <- variofit(vario, ini.cov.pars=init, kappa=1.5,  fix.nug=F,messages = F))
@@ -344,14 +344,15 @@ loglikeRange <- function(phi, kappa, tau2OverSig2, y, X, s) {
 #### Evaluate at log like sill and range ####
 # takes a long time to run
 
-X <- as.matrix(cbind(1,mod2$model[,-1]))
+vf.bestfit <- vf[[ which.min(sapply(vf, function(x) x$value)) ]]
+X <- as.matrix(cbind(1,mod$model[,-1]))
 NCOL(X)
 
-kappa_list <- as.list(c(0.5, 1, 1.5, 2.5))
+kappa_list <- as.list(c(2.5))
 J <- 20
 
-sig2.grid <- seq(0, 1, len=J)
-phi.grid <- seq(0, 20, len=J)
+sig2.grid <- seq(10, 100, len=J)
+phi.grid <- seq(0, 25, len=J)
 #sig2.grid <- seq(0, 100, len=J)
 #phi.grid <- seq(0, 100, len=J)
 out <- lapply(kappa_list, function(k) {
@@ -366,22 +367,23 @@ out <- lapply(kappa_list, function(k) {
   }
   out
 })
+
 # save the file because its a bitch to re-run
 write.csv(out, file = "likelihood_out.txt")
 
 #### Kappa 0.5 ####
 (mxout = max(out[[1]], na.rm = T))
-clevels = seq(mxout-700, mxout, length.out = 10)
+clevels = seq(mxout-1000, mxout, length.out = 10)
 
 par(mfrow = c(1,2))
 par(mar = c(5, 4, 4, 2))
-contour(x = phi.grid[1:10], y = sig2.grid[1:20], out[[1]][1:10,1:20], 
+contour(x = phi.grid[1:6], y = sig2.grid[1:20], out[[1]][1:6,1:20], 
         xlab='phi', ylab='sig2', levels = clevels)
 
 
 par(mar = c(0, 1, 0, 0))
 persp( x = phi.grid, y = sig2.grid, out[[1]],
-       ylab = " \n\n\n sigma^2\n", xlab = "\n \n phi \n\n\n\n", theta = 350, phi = 20,
+       ylab = " \n\n\n sigma^2\n", xlab = "\n \n phi \n\n\n\n", theta = 330, phi = 0,
        zlab = 'log likelihood', col = 'white' )
 title("nu = 0.5", outer = T,line = -2)
 
@@ -391,7 +393,7 @@ clevels = seq(mxout-700, mxout, length.out = 10)
 
 par(mfrow = c(1,2))
 par(mar = c(5, 4, 4, 2))
-contour(phi.grid[1:5], sig2.grid, out[[2]][1:5,], ylab='sig2', xlab='phi', levels = clevels)
+contour(phi.grid, sig2.grid, out[[2]], ylab='sig2', xlab='phi', levels = clevels)
 
 
 par(mar = c(0, 1, 0, 0))

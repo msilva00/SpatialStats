@@ -1,19 +1,19 @@
 # # FULL CODE
-# setwd("~/SpatialStats/Homework3/")
-# rm(list = ls())
-# libs = c('geoR','sf','fields', 'ncdf4','tidyverse')
-# sapply(libs, require, character.only = TRUE)
+setwd("~/homework3-spacialstats/")
+rm(list = ls())
+libs = c('geoR','sf','fields', 'ncdf4','tidyverse')
+sapply(libs, require, character.only = TRUE)
 # 
 
 #### Filter the data ####
-# # dissolve world_countries_boundaries to yield landmass
-# land = read_sf(
-#     dsn = "UIA_World_Countries_Boundaries", 
-#     layer = "UIA_World_Countries_Boundaries"
-#     ) %>% 
-#   mutate(bleh = 'bleh') %>% 
-#   group_by(bleh) %>% 
-#   summarise()
+# dissolve world_countries_boundaries to yield landmass
+land = read_sf(
+    dsn = "UIA_World_Countries_Boundaries",
+    layer = "UIA_World_Countries_Boundaries"
+    ) %>%
+  mutate(bleh = 'bleh') %>%
+  group_by(bleh) %>%
+  summarise()
 # 
 # proj_intersect = function(df){
 #   ## projects points dataframe subset as a feature class
@@ -89,6 +89,15 @@ head(ex)
 library(dplyr)
 random5001 = sample_n(ex, 500)
 random500 = random5001[,c(1,2,6)]
+library(MASS)
+library(geoR)
+# Install libraries ...
+#=================================================
+library(Matrix)   # ... for matrix operations
+library(car)      # ... for ellipse plots
+library(stats)    # ... for statistical operations
+library(MASS)     # ... for Multivariate Normal Distribution
+library(graphics) # ... for arrows
 y = bcPower(random500[,3],0)
 require(graphics)
 col.vals = (y - min(y)) / (diff(range(y)))
@@ -129,7 +138,6 @@ for (i in 1:6){
   text(max(random500[,1])+1.12, min(random500[,2])+(i-1)*diff(range(random500[,2])/5),
        round(seq(min(y), max(y), length = 6)[i], 2), pos=4)
 }
-library(VGAM)
 par(mfrow = c(2,2), mar = c(3,3,5,3))
 hist(log(random500[,3]), freq = F, main = "")
 lines(density(log(random500[,3])))
@@ -157,6 +165,11 @@ lat = random500$latitude
 locs = cbind(lon, lat)
 s = cbind(lon,lat)
 
+head(ex)
+correct_full_table = sample_n(ex[,c(1,2,6)], 100)
+head(correct_full_table)
+locs_samp = correct_full_table[,c(1,2)]
+
 mod = step(lm(y ~ . + .^2 + I(loc^2), data = data.frame(loc)), scope = list("lower" = lm(y ~ 1),
                                                                             "upper" = lm(y ~ . + .^2 + I(loc^2), data = data.frame(loc))),
            direction = "both")
@@ -175,9 +188,14 @@ MC <- model.control(trend.d = "2nd", trend.l = "2nd",kappa = 1.5)
 PC <- prior.control(phi.discrete = seq(0, 6, l = 21),
                     phi.prior = "reciprocal", tausq.rel.prior = "unif",
                     tausq.rel.discrete = seq(0, 1, l = 11))
-OC <- output.control(n.post = 1000, moments = T)
+OC <- output.control(n.post = 1000, moments = T, n.predictive = length(correct_full_table[,1]))
 
 ?output.control
-skb <- krige.bayes(geodata, model = MC, prior = PC, output = OC, locations=locs)
+skb <- krige.bayes(geodata, model = MC, prior = PC, output = OC, locations=locs_samp)
 hist(skb$posterior$sample$beta0, xlab = expression(beta[0]))
 abline(v = mean(skb$posterior$sample$beta0), col = "red", lwd = 2)
+
+c
+
+
+

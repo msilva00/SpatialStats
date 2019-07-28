@@ -6,6 +6,12 @@ library(ggmap)
 library(maps)
 library(geoR)
 library(spBayes)
+library(rgl)
+library(maps)
+library(geoR)
+library(spBayes)
+library(fields)
+library(akima)
 
 setwd("~/homework3-spacialstats/")
 nc1_075 = 'GSA_AlbedoProd_GOES_075_VIS02_2000_181.nc'
@@ -167,6 +173,31 @@ pp1 = spLM(y1 ~ lon + lat + I(lon^2) + I(lat^2) + lon*lat, data = loc1, coords =
 pp1.samples = spPredict(pp1, pred.coords = goes75[,1:2], pred.covars = X)
 
 pred.pp1 = apply(pp1.samples$p.y.predictive.samples, 1, mean)
+
+plot.nice = function(xy, z, zscale, nlevels = 20, ...){
+  df = data.frame("x" = xy[,1], "y" = xy[,2], "z" = z)
+  fld = with(df, interp(x = x, y = y, z = z))
+  xlim = c(min(xy[,1]), max(xy[,1])+diff(range(xy[,1]))*0.2)
+  ylim = range(xy[,2])
+  offx = diff(range(xy[,1]))*0.2
+  if (missing(zscale))
+    zscale = range(fld$z, na.rm = TRUE)
+  zlevels = seq(zscale[1], zscale[2], length = nlevels)
+  plot(0, type='n', xlim = c(min(xy[,1]), max(xy[,1])+offx),
+       ylim = range(xy[,2]),
+       xlab = "Longitude", ylab = "Latitude", bty = 'n')
+  .filled.contour(x = fld$x, y = fld$y, z = fld$z,
+                  levels = zlevels,
+                  col = tim.colors(nlevels))
+  rect(rep(xlim[2] - offx*0.50 , nlevels), head(seq(ylim[1], ylim[2], length = nlevels+1), nlevels),
+       rep(xlim[2] - offx*0.75, nlevels), tail(seq(ylim[1], ylim[2], length = nlevels+1), nlevels),
+       col = tim.colors(nlevels))
+  text(x = rep(xlim[2] - offx*0.25, 7), y = seq(ylim[1], ylim[2], length = 5),
+       labels = round(seq(zscale[1], zscale[2], length = 5), 2))
+  title(...)
+  map("state", add = TRUE)
+}
+
 #--------plot---------
 plot.nice(loc1, pred.pp1, zscale = range(pp1),
           nlevels = 20, main = "Ozone - Predictive Process")
